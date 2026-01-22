@@ -8,7 +8,7 @@ import org.matsim.core.events.MatsimEventsReader;
 public class RunEventsHandler {
 
 	public static void main(String[] args) {
-		String eventFile = "output/output-dresden-1pct/dresden-1pct.output_events.xml.gz"; // nochmal mit Standardeinstellungen laufen lassen
+		String eventFile = "output/basis/dresden-1pct.output_events.xml.gz"; // nochmal mit Standardeinstellungen laufen lassen
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 

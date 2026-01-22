@@ -1,8 +1,11 @@
 package org.matsim.events;
 
+import jdk.jfr.EventType;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
+import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.network.Link;
@@ -12,9 +15,14 @@ import org.matsim.vehicles.Vehicle;
 import java.util.*;
 
 
-public class LinkEventAnalyzer implements LinkLeaveEventHandler, PersonEntersVehicleEventHandler {
+public class LinkEventAnalyzer implements
+	LinkLeaveEventHandler,
+	PersonEntersVehicleEventHandler,
+	ActivityEndEventHandler {
 
 	// Alle LinkIDs der Würzburger Straße in einer Liste speichern, um immer nur auf ein Objekt zugreifen zu müssen
+	// selbst eingefügter Link wird nicht benötigt, da eh nur für Rad freigegeben
+
 	Set<Id<Link>> wuerzburgerStrasse_Links = Set.of(
 		Id.createLinkId("-50442874#2"),
 		Id.createLinkId("50442874#0"),
@@ -55,50 +63,59 @@ public class LinkEventAnalyzer implements LinkLeaveEventHandler, PersonEntersVeh
 		Id.createLinkId("4428653")
 	);
 
-	HashMap<Id<Vehicle>, Id<Person>> person = new HashMap<>();
+
+	// Map die Vehicle ID mit Person ID in Kombination darstellt
+	HashMap<Id<Vehicle>, Id<Person>> personVehicleID = new HashMap<>();
 
 	public void handleEvent(PersonEntersVehicleEvent event) {
-
 		Id<Vehicle> vehicleId = event.getVehicleId();
 		Id<Person> personId = event.getPersonId();
 
-		person.put(vehicleId,personId);
+		personVehicleID.put(vehicleId,personId);
 	}
 
-
-	Set<Id<Vehicle>> vehicles = new HashSet<>();
+	// Fahrten auf Würzburger Straße
+	Set<Id<Vehicle>> vehiclesOnWuerzburger = new HashSet<>();
 
 	@Override
 	public void handleEvent(LinkLeaveEvent event) {
 		Id<Link> linkId = event.getLinkId();
 
 		if(wuerzburgerStrasse_Links.contains(linkId)) {
-			vehicles.add(event.getVehicleId());
+			vehiclesOnWuerzburger.add(event.getVehicleId());
 		}
 	}
 
-
+	// Personen der Fahrten der Würzburger bestimmen
+	Set<Id<Person>> personsOnWuerzburger = new HashSet<Id<Person>>();
 
 	public void personenidentifikation(){
 
-		Set<Id<Person>> personsonwuerzburger = new HashSet<Id<Person>>();
-
-		for (Map.Entry<Id<Vehicle>, Id<Person>> entry : person.entrySet()) {
+		for (Map.Entry<Id<Vehicle>, Id<Person>> entry : personVehicleID.entrySet()) {
 
 			Id<Person> personId = entry.getValue();
 			Id<Vehicle> vehicleId = entry.getKey();
 
-			if (vehicles.contains(vehicleId)) {
-				personsonwuerzburger.add(personId);
+			if (vehiclesOnWuerzburger.contains(vehicleId)) {
+				personsOnWuerzburger.add(personId);
 			}
 		}
-		return personsonwuerzburger;
+	}
+
+	// Anlieger der Würzburger bestimmen
+	Set<Id<Person>> residents = new HashSet<>();
+
+	@Override
+	public void handleEvent(ActivityEndEvent event) {
+		if(wuerzburgerStrasse_Links.contains(event.getLinkId())){
+			residents.add(event.getPersonId());
+		}
 	}
 
 
 	public void printResult(){
 
-		System.out.println(personsonwuerzburger);
+		System.out.println(personsOnWuerzburger);
 //		for (Id<Vehicle> vehicleId : person.keySet()) {
 //			System.out.println("vehicleId = " + vehicleId);
 //			System.out.println("personId = " + person.get(vehicleId));
