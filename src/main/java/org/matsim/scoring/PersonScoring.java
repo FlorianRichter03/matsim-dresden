@@ -82,18 +82,23 @@ public class PersonScoring implements
 	Set<Id<Vehicle>> vehiclesOnWuerzburger = new HashSet<>();
 
 
-	PersonScoring personScoring = new PersonScoring();
-
 	@Override
 	public void handleEvent(LinkLeaveEvent event) {
 		Id<Link> linkId = event.getLinkId();
 
-		if(wuerzburgerStrasse_Links.contains(linkId)) {
-			vehiclesOnWuerzburger.add(event.getVehicleId());
+		// Alle vehilce IDs die Bike beinhalten werden nicht beachtet
+
+		if (wuerzburgerStrasse_Links.contains(linkId)) {
+			if (event.getVehicleId() != null
+				&& !event.getVehicleId().toString().startsWith("bike")) {
+
+				vehiclesOnWuerzburger.add(event.getVehicleId());
+			}
 		}
 
-		personScoring.personenidentifikation();
-
+//		if(wuerzburgerStrasse_Links.contains(linkId)) {
+//			vehiclesOnWuerzburger.add(event.getVehicleId());
+//		}
 	}
 
 	// Personen der Fahrten der Würzburger bestimmen
@@ -140,6 +145,8 @@ public class PersonScoring implements
 
 	@Override
 	public void handleEvent(PersonLeavesVehicleEvent event) {
+		personenidentifikation();
+
 		for(Id<Person> personId : personsOnWuerzburger){
 			if(!residents.contains(personId)){
 				score -= 1000.0;
