@@ -10,6 +10,7 @@ import java.util.Set;
 
 public class NetworkModifier {
 
+	// LinkAttribute einstellen
 	private static final Id<Node> from_Node_ID = Id.createNodeId("2016386874");
 	private static final Id<Node> to_Node_ID = Id.createNodeId("27164749");
 
@@ -38,9 +39,6 @@ public class NetworkModifier {
 		wuerzburger_verlaengerung.setCapacity(capacity);
 
 		network.addLink(wuerzburger_verlaengerung);
-
-
-
 
 	}
 

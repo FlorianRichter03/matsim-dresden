@@ -41,6 +41,8 @@ public class RunDresdenWithCostumScoring {
 			config = ConfigUtils.loadConfig( args );
 		}
 
+
+
 		config.controller().setOverwriteFileSetting( OverwriteFileSetting.deleteDirectoryIfExists );
 
 		// possibly modify config here

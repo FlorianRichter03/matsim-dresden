@@ -132,6 +132,7 @@ public class PersonScoring implements
 	// Scoring Funktion anpassen für Nicht-Anlieger
 	private double score;
 
+
 	@Override
 	public void handleEvent(Event event) {
 		for(Id<Person> personId : personsOnWuerzburger){

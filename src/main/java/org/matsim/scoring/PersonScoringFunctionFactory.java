@@ -14,6 +14,7 @@ public class PersonScoringFunctionFactory implements ScoringFunctionFactory {
 		this.scenario = scenario;
 	}
 
+
 	@Override
 	public ScoringFunction createNewScoringFunction(Person person) {
 		SumScoringFunction sumScoringFunction = new SumScoringFunction();
