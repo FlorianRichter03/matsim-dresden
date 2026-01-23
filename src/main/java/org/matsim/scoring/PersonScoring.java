@@ -1,13 +1,11 @@
 package org.matsim.scoring;
 
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.events.ActivityEndEvent;
-import org.matsim.api.core.v01.events.Event;
-import org.matsim.api.core.v01.events.LinkLeaveEvent;
-import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
+import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.scoring.SumScoringFunction;
@@ -22,7 +20,8 @@ public class PersonScoring implements
 	SumScoringFunction.ArbitraryEventScoring,
 	LinkLeaveEventHandler,
 	PersonEntersVehicleEventHandler,
-	ActivityEndEventHandler {
+	ActivityEndEventHandler,
+	PersonLeavesVehicleEventHandler {
 
 
 	// Alle LinkIDs der Würzburger Straße in einer Liste speichern, um immer nur auf ein Objekt zugreifen zu müssen
@@ -82,6 +81,9 @@ public class PersonScoring implements
 	// Fahrten auf Würzburger Straße
 	Set<Id<Vehicle>> vehiclesOnWuerzburger = new HashSet<>();
 
+
+	PersonScoring personScoring = new PersonScoring();
+
 	@Override
 	public void handleEvent(LinkLeaveEvent event) {
 		Id<Link> linkId = event.getLinkId();
@@ -89,6 +91,9 @@ public class PersonScoring implements
 		if(wuerzburgerStrasse_Links.contains(linkId)) {
 			vehiclesOnWuerzburger.add(event.getVehicleId());
 		}
+
+		personScoring.personenidentifikation();
+
 	}
 
 	// Personen der Fahrten der Würzburger bestimmen
@@ -118,15 +123,15 @@ public class PersonScoring implements
 	}
 
 
-	public void printResult(){
-
-		System.out.println(personsOnWuerzburger);
+//	public void printResult(){
+//
+//		System.out.println(personsOnWuerzburger);
 //		for (Id<Vehicle> vehicleId : person.keySet()) {
 //			System.out.println("vehicleId = " + vehicleId);
 //			System.out.println("personId = " + person.get(vehicleId));
 //		}
-
-	}
+//
+//	}
 
 
 	// Scoring Funktion anpassen für Nicht-Anlieger
@@ -134,7 +139,7 @@ public class PersonScoring implements
 
 
 	@Override
-	public void handleEvent(Event event) {
+	public void handleEvent(PersonLeavesVehicleEvent event) {
 		for(Id<Person> personId : personsOnWuerzburger){
 			if(!residents.contains(personId)){
 				score -= 1000.0;
@@ -147,5 +152,12 @@ public class PersonScoring implements
 	@Override
 	public double getScore() {
 		return score;
+	}
+
+
+	// leer lassen zur Fehlerbehebung
+	@Override
+	public void handleEvent(Event event) {
+
 	}
 }

@@ -7,9 +7,12 @@ import jakarta.annotation.Nullable;
 import org.matsim.analysis.CheckAndSummarizeLongDistanceFreightPopulation;
 import org.matsim.analysis.CheckStayHomeAgents;
 import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.traffic.LinkStats;
@@ -42,6 +45,7 @@ import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.dashboards.DresdenDashboardProvider;
 import org.matsim.prepare.*;
+import org.matsim.scoring.PersonScoringFunctionFactory;
 import org.matsim.simwrapper.DashboardProvider;
 import org.matsim.simwrapper.SimWrapperConfigGroup;
 import org.matsim.simwrapper.SimWrapperModule;
@@ -228,6 +232,39 @@ public class DresdenScenario extends MATSimApplication {
 //			prepare vehicle types for emission analysis
 			prepareVehicleTypesForEmissionAnalysis(scenario);
 		}
+
+		// LinkAttribute einstellen
+		Id<Node> from_Node_ID = Id.createNodeId("2016386874");
+		Id<Node> to_Node_ID = Id.createNodeId("27164749");
+
+		Id<Link> Id_wuerzbuerger_verlaengerung = Id.createLinkId("wuerzburger_verlaengernung");
+
+		double length = 190.21;
+		double freespeed = 5.8309999999999995;
+		int lanes = 1;
+		double capacity = 600;
+
+			Network network = scenario.getNetwork();
+
+			Node fromNode = network.getNodes().get(from_Node_ID);
+			Node toNode   = network.getNodes().get(to_Node_ID);
+
+			Link wuerzburger_verlaengerung = network.getFactory().createLink(
+				Id_wuerzbuerger_verlaengerung,
+				fromNode,
+				toNode
+			);
+
+			wuerzburger_verlaengerung.setLength(length);
+			wuerzburger_verlaengerung.setAllowedModes(Set.of("bike"));
+			wuerzburger_verlaengerung.setFreespeed(freespeed);
+			wuerzburger_verlaengerung.setCapacity(capacity);
+			wuerzburger_verlaengerung.setNumberOfLanes(lanes);
+
+			network.addLink(wuerzburger_verlaengerung);
+
+
+
 	}
 
 	@Override
@@ -250,6 +287,13 @@ public class DresdenScenario extends MATSimApplication {
 				Multibinder.newSetBinder(binder(), DashboardProvider.class).addBinding().to(DresdenDashboardProvider.class);
 			}
 		});
+
+
+		controler.addOverridingModule( new AbstractModule(){
+			@Override public void install() {
+				this.bindScoringFunctionFactory().to( PersonScoringFunctionFactory.class ) ;
+			}
+		} );
 	}
 
 	/**
