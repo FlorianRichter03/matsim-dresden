@@ -29,7 +29,7 @@ public class PersonScoringFunctionFactory implements ScoringFunctionFactory {
 		sumScoringFunction.addScoringFunction(new CharyparNagelMoneyScoring(params));
 		sumScoringFunction.addScoringFunction(new CharyparNagelAgentStuckScoring(params));
 
-		sumScoringFunction.addScoringFunction(new PersonScoring());
+		sumScoringFunction.addScoringFunction(new PersonScoring(person.getId()));
 
 		return sumScoringFunction;
 	}
