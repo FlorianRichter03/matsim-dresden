@@ -123,11 +123,20 @@ public class PersonScoring implements
 	}
 
 	// Anlieger der Würzburger bestimmen
+	// nicht einfach ActivityEndEvent an sich, weil dann auch Activities wie car interaction etc...
 	Set<Id<Person>> residents = new HashSet<>();
 
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
-		if(wuerzburgerStrasse_Links.contains(event.getLinkId())){
+		if(wuerzburgerStrasse_Links.contains(event.getLinkId())
+			&& (event.getActType().startsWith("home")
+			|| event.getActType().startsWith("work")
+			|| event.getActType().startsWith("edu")
+			|| event.getActType().startsWith("shopping")
+			|| event.getActType().startsWith("leisure")
+			|| event.getActType().startsWith("business")
+			|| event.getActType().startsWith("other"))){
+
 			residents.add(event.getPersonId());
 		}
 	}
