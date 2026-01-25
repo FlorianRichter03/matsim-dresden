@@ -86,7 +86,7 @@ public class PersonScoring implements
 	public void handleEvent(LinkLeaveEvent event) {
 		Id<Link> linkId = event.getLinkId();
 
-		// Alle vehilce IDs die Bike beinhalten werden nicht beachtet
+		// Alle vehicle IDs die Bike beinhalten werden nicht beachtet
 
 		if (wuerzburgerStrasse_Links.contains(linkId)) {
 			if (event.getVehicleId() != null
@@ -95,25 +95,30 @@ public class PersonScoring implements
 				vehiclesOnWuerzburger.add(event.getVehicleId());
 			}
 		}
-
-//		if(wuerzburgerStrasse_Links.contains(linkId)) {
-//			vehiclesOnWuerzburger.add(event.getVehicleId());
-//		}
 	}
 
-	// Personen der Fahrten der Würzburger bestimmen
+//	// Personen der Fahrten der Würzburger bestimmen
 	Set<Id<Person>> personsOnWuerzburger = new HashSet<Id<Person>>();
+//
+//	public void personenidentifikation(){
+//
+//		for (Map.Entry<Id<Vehicle>, Id<Person>> entry : personVehicleID.entrySet()) {
+//
+//			Id<Person> personId = entry.getValue();
+//			Id<Vehicle> vehicleId = entry.getKey();
+//
+//			if (vehiclesOnWuerzburger.contains(vehicleId)) {
+//				personsOnWuerzburger.add(personId);
+//			}
+//		}
+//	}
 
-	public void personenidentifikation(){
 
-		for (Map.Entry<Id<Vehicle>, Id<Person>> entry : personVehicleID.entrySet()) {
-
-			Id<Person> personId = entry.getValue();
-			Id<Vehicle> vehicleId = entry.getKey();
-
-			if (vehiclesOnWuerzburger.contains(vehicleId)) {
-				personsOnWuerzburger.add(personId);
-			}
+	@Override
+	public void handleEvent(PersonLeavesVehicleEvent event) {
+		Id<Person> personId = personVehicleID.get(event.getVehicleId());
+		if (personId != null && vehiclesOnWuerzburger.contains(event.getVehicleId())) {
+			personsOnWuerzburger.add(personId);
 		}
 	}
 
@@ -127,7 +132,6 @@ public class PersonScoring implements
 		}
 	}
 
-
 //	public void printResult(){
 //
 //		System.out.println(personsOnWuerzburger);
@@ -138,27 +142,44 @@ public class PersonScoring implements
 //
 //	}
 
-
 	// Scoring Funktion anpassen für Nicht-Anlieger
-	private double score;
+//	private double score;
 
-
-	@Override
-	public void handleEvent(PersonLeavesVehicleEvent event) {
-		personenidentifikation();
-
-		for(Id<Person> personId : personsOnWuerzburger){
-			if(!residents.contains(personId)){
-				score -= 1000.0;
-			}
-		}
-	}
+//	@Override
+//	public void handleEvent(PersonLeavesVehicleEvent event) {
+//		personenidentifikation();
+//
+//		for(Id<Person> personId : personsOnWuerzburger){
+//			if(!residents.contains(personId)){
+//				score -= 10000.0;
+//			}
+//		}
+//	}
 
 	@Override public void finish() {}
 
+//	@Override
+//	public double getScore() {
+//		return score;
+//	}
+
 	@Override
 	public double getScore() {
+		double score = 0;
+		for (Id<Person> personId : personsOnWuerzburger) {
+			if (!residents.contains(personId)) {
+				score -= 10000.0;  // harte Strafe für MIV auf Würzburger Straße
+			}
+		}
 		return score;
+	}
+
+	//Listen nach Iteration leeren, damit Speicher nicht überläuft -> Fehlermeldung beheben
+	@Override
+	public void reset(int iteration) {
+		vehiclesOnWuerzburger.clear();
+		personsOnWuerzburger.clear();
+		residents.clear();
 	}
 
 
