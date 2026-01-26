@@ -233,35 +233,34 @@ public class DresdenScenario extends MATSimApplication {
 			prepareVehicleTypesForEmissionAnalysis(scenario);
 		}
 
-		// LinkAttribute einstellen
+
+		// neuen Link einfügen - Abschnitt der Würzburger Straße zwischen Münchner Straße und Nöthnitzer Straße
+		// NodeId aus Via
+
 		Id<Node> from_Node_ID = Id.createNodeId("2016386874");
 		Id<Node> to_Node_ID = Id.createNodeId("27164749");
 
-		Id<Link> Id_wuerzbuerger_verlaengerung = Id.createLinkId("wuerzburger_verlaengernung");
+		Id<Link> Id_wuerzburger_verlaengerung = Id.createLinkId("wuerzburger_verlaengerung");
 
-		double length = 190.21;
-		double freespeed = 5.8309999999999995;
-		int lanes = 1;
-		double capacity = 600;
+		Network network = scenario.getNetwork();
 
-			Network network = scenario.getNetwork();
+		Node fromNode = network.getNodes().get(from_Node_ID);
+		Node toNode   = network.getNodes().get(to_Node_ID);
 
-			Node fromNode = network.getNodes().get(from_Node_ID);
-			Node toNode   = network.getNodes().get(to_Node_ID);
+		Link wuerzburger_verlaengerung = network.getFactory().createLink(
+			Id_wuerzburger_verlaengerung,
+			fromNode,
+			toNode
+		);
 
-			Link wuerzburger_verlaengerung = network.getFactory().createLink(
-				Id_wuerzbuerger_verlaengerung,
-				fromNode,
-				toNode
-			);
+		// Parameter angepasst an den schon existierenden Link in der anderen Richtung
+		wuerzburger_verlaengerung.setLength(190.21);
+		wuerzburger_verlaengerung.setAllowedModes(Set.of("bike"));
+		wuerzburger_verlaengerung.setFreespeed(5.8309999999999995);
+		wuerzburger_verlaengerung.setCapacity(600);
+		wuerzburger_verlaengerung.setNumberOfLanes(1);
 
-			wuerzburger_verlaengerung.setLength(length);
-			wuerzburger_verlaengerung.setAllowedModes(Set.of("bike"));
-			wuerzburger_verlaengerung.setFreespeed(freespeed);
-			wuerzburger_verlaengerung.setCapacity(capacity);
-			wuerzburger_verlaengerung.setNumberOfLanes(lanes);
-
-			network.addLink(wuerzburger_verlaengerung);
+		network.addLink(wuerzburger_verlaengerung);
 
 
 
