@@ -20,16 +20,8 @@ public class PersonScoring implements
 	SumScoringFunction.ArbitraryEventScoring,
 	LinkLeaveEventHandler,
 	PersonEntersVehicleEventHandler,
-	ActivityEndEventHandler {
-
-	Id<Person> personId;
-
-	private boolean usedWuerzburger = false;
-	private boolean isResident = false;
-
-	public PersonScoring(Id<Person> personId){
-		this.personId = personId;
-	}
+	ActivityEndEventHandler,
+	PersonLeavesVehicleEventHandler {
 
 
 	// Alle LinkIDs der Würzburger Straße in einer Liste speichern, um immer nur auf ein Objekt zugreifen zu müssen
@@ -81,6 +73,7 @@ public class PersonScoring implements
 
 	public void handleEvent(PersonEntersVehicleEvent event) {
 		Id<Vehicle> vehicleId = event.getVehicleId();
+		Id<Person> personId = event.getPersonId();
 
 		if(event.getPersonId().equals(personId)) {
 			personVehicleID.put(vehicleId, personId);
@@ -92,51 +85,37 @@ public class PersonScoring implements
 
 	private double score = 0.0;
 
+
 	@Override
 	public void handleEvent(LinkLeaveEvent event) {
-		if (!event.getVehicleId().toString().startsWith("bike")
-			&& wuerzburgerStrasse_Links.contains(event.getLinkId())
-			&& personVehicleID.containsKey(event.getVehicleId())) {
+		Id<Link> linkId = event.getLinkId();
 
+		// Alle vehicle IDs die Bike beinhalten werden nicht beachtet
 
-			usedWuerzburger = true;
+		if (wuerzburgerStrasse_Links.contains(linkId)) {
+			if (event.getVehicleId() != null
+				&& !event.getVehicleId().toString().startsWith("bike")) {
 
-			if(!isResident){
-				score -= 10000.0;
+				vehiclesOnWuerzburger.add(event.getVehicleId());
 			}
 		}
 	}
 
-//	@Override
-//	public void handleEvent(LinkLeaveEvent event) {
-//		Id<Link> linkId = event.getLinkId();
-//
-//		// Alle vehicle IDs die Bike beinhalten werden nicht beachtet
-//
-//		if (wuerzburgerStrasse_Links.contains(linkId)) {
-//			if (event.getVehicleId() != null
-//				&& !event.getVehicleId().toString().startsWith("bike")) {
-//
-//				vehiclesOnWuerzburger.add(event.getVehicleId());
-//			}
-//		}
-//	}
+	// Personen der Fahrten der Würzburger bestimmen
+	Set<Id<Person>> personsOnWuerzburger = new HashSet<Id<Person>>();
 
-//	// Personen der Fahrten der Würzburger bestimmen
-	//Set<Id<Person>> personsOnWuerzburger = new HashSet<Id<Person>>();
-//
-//	public void personenidentifikation(){
-//
-//		for (Map.Entry<Id<Vehicle>, Id<Person>> entry : personVehicleID.entrySet()) {
-//
-//			Id<Person> personId = entry.getValue();
-//			Id<Vehicle> vehicleId = entry.getKey();
-//
-//			if (vehiclesOnWuerzburger.contains(vehicleId)) {
-//				personsOnWuerzburger.add(personId);
-//			}
-//		}
-//	}
+	public void personenidentifikation(){
+
+		for (Map.Entry<Id<Vehicle>, Id<Person>> entry : personVehicleID.entrySet()) {
+
+			Id<Person> personId = entry.getValue();
+			Id<Vehicle> vehicleId = entry.getKey();
+
+			if (vehiclesOnWuerzburger.contains(vehicleId)) {
+				personsOnWuerzburger.add(personId);
+			}
+		}
+	}
 
 
 //	@Override
@@ -149,40 +128,24 @@ public class PersonScoring implements
 
 	// Anlieger der Würzburger bestimmen
 	// nicht einfach ActivityEndEvent an sich, weil dann auch Activities wie car interaction etc...
-	//Set<Id<Person>> residents = new HashSet<>();
+	Set<Id<Person>> residents = new HashSet<>();
+
 
 
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
-		if (event.getPersonId().equals(personId)
-			&& wuerzburgerStrasse_Links.contains(event.getLinkId())
+		if(wuerzburgerStrasse_Links.contains(event.getLinkId())
 			&& (event.getActType().startsWith("home")
 			|| event.getActType().startsWith("work")
 			|| event.getActType().startsWith("edu")
 			|| event.getActType().startsWith("shopping")
 			|| event.getActType().startsWith("leisure")
 			|| event.getActType().startsWith("business")
-			|| event.getActType().startsWith("other"))) {
+			|| event.getActType().startsWith("other"))){
 
-
-			isResident = true;
+			residents.add(event.getPersonId());
 		}
 	}
-
-//	@Override
-//	public void handleEvent(ActivityEndEvent event) {
-//		if(wuerzburgerStrasse_Links.contains(event.getLinkId())
-//			&& (event.getActType().startsWith("home")
-//			|| event.getActType().startsWith("work")
-//			|| event.getActType().startsWith("edu")
-//			|| event.getActType().startsWith("shopping")
-//			|| event.getActType().startsWith("leisure")
-//			|| event.getActType().startsWith("business")
-//			|| event.getActType().startsWith("other"))){
-//
-//			residents.add(event.getPersonId());
-//		}
-//	}
 
 //	public void printResult(){
 //
@@ -197,23 +160,18 @@ public class PersonScoring implements
 	// Scoring Funktion anpassen für Nicht-Anlieger
 //	private double score;
 
-//	@Override
-//	public void handleEvent(PersonLeavesVehicleEvent event) {
-//		personenidentifikation();
-//
-//		for(Id<Person> personId : personsOnWuerzburger){
-//			if(!residents.contains(personId)){
-//				score -= 10000.0;
-//			}
-//		}
-//	}
+	@Override
+	public void handleEvent(PersonLeavesVehicleEvent event) {
+		personenidentifikation();
+
+		for(Id<Person> personId : personsOnWuerzburger){
+			if(!residents.contains(personId)){
+				score -= 10000.0;
+			}
+		}
+	}
 
 	@Override public void finish() {}
-
-//	@Override
-//	public double getScore() {
-//		return score;
-//	}
 
 
 	@Override
@@ -221,26 +179,13 @@ public class PersonScoring implements
 		return score;
 	}
 
-//	@Override
-//	public double getScore() {
-//		double score = 0;
-//		for (Id<Person> personId : personsOnWuerzburger) {
-//			if (!residents.contains(personId)) {
-//				score -= 10000.0;  // harte Strafe für MIV auf Würzburger Straße
-//			}
-//		}
-//		return score;
-//	}
-
 	//Listen nach Iteration leeren, damit Speicher nicht überläuft -> Fehlermeldung beheben
 	@Override
 	public void reset(int iteration) {
 		personVehicleID.clear();
 		score = 0.0;
-		usedWuerzburger = false;
-		isResident = false;
-		//personsOnWuerzburger.clear();
-		//residents.clear();
+		personsOnWuerzburger.clear();
+		residents.clear();
 	}
 
 
