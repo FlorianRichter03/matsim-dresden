@@ -90,6 +90,7 @@ public class PersonScoring implements
 	// Fahrten auf Würzburger Straße
 	Set<Id<Vehicle>> vehiclesOnWuerzburger = new HashSet<>();
 
+	private double score = 0.0;
 
 	@Override
 	public void handleEvent(LinkLeaveEvent event) {
@@ -99,6 +100,10 @@ public class PersonScoring implements
 
 
 			usedWuerzburger = true;
+
+			if(!isResident){
+				score -= 10000.0;
+			}
 		}
 	}
 
@@ -118,7 +123,7 @@ public class PersonScoring implements
 //	}
 
 //	// Personen der Fahrten der Würzburger bestimmen
-	Set<Id<Person>> personsOnWuerzburger = new HashSet<Id<Person>>();
+	//Set<Id<Person>> personsOnWuerzburger = new HashSet<Id<Person>>();
 //
 //	public void personenidentifikation(){
 //
@@ -144,7 +149,7 @@ public class PersonScoring implements
 
 	// Anlieger der Würzburger bestimmen
 	// nicht einfach ActivityEndEvent an sich, weil dann auch Activities wie car interaction etc...
-	Set<Id<Person>> residents = new HashSet<>();
+	//Set<Id<Person>> residents = new HashSet<>();
 
 
 	@Override
@@ -213,10 +218,7 @@ public class PersonScoring implements
 
 	@Override
 	public double getScore() {
-		if (usedWuerzburger && !isResident) {
-			return -10000.0;
-		}
-		return 0.0;
+		return score;
 	}
 
 //	@Override
@@ -233,9 +235,12 @@ public class PersonScoring implements
 	//Listen nach Iteration leeren, damit Speicher nicht überläuft -> Fehlermeldung beheben
 	@Override
 	public void reset(int iteration) {
-		vehiclesOnWuerzburger.clear();
-		personsOnWuerzburger.clear();
-		residents.clear();
+		personVehicleID.clear();
+		score = 0.0;
+		usedWuerzburger = false;
+		isResident = false;
+		//personsOnWuerzburger.clear();
+		//residents.clear();
 	}
 
 
