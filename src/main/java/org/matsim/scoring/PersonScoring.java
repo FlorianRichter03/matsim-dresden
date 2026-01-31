@@ -1,5 +1,49 @@
 package org.matsim.scoring;
 
+import org.apache.logging.log4j.LogManager;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.scoring.SumScoringFunction;
+
+import java.util.logging.Logger;
+
+public class PersonScoring implements SumScoringFunction.BasicScoring {
+
+	private final Id<Person> personId;
+	private final boolean isResident;
+	private final BicycleRoadTrafficHandler handler;
+
+
+	private double score = 0.0;
+
+	public PersonScoring(
+		Id<Person> personId,
+		boolean isResident,
+		BicycleRoadTrafficHandler handler
+	) {
+		this.personId = personId;
+		this.isResident = isResident;
+		this.handler = handler;
+	}
+
+	@Override
+	public void finish() {
+		if (!isResident && handler.usedWuerzburger(personId)) {
+			score -= 10000.0;
+		}
+	}
+
+	@Override
+	public double getScore() {
+		return score;
+	}
+}
+
+
+
+/* Reset Safe
+package org.matsim.scoring;
+
 import org.matsim.core.scoring.SumScoringFunction;
 
 public class PersonScoring implements SumScoringFunction.BasicScoring {
@@ -20,3 +64,5 @@ public class PersonScoring implements SumScoringFunction.BasicScoring {
 		return score;
 	}
 }
+
+ */

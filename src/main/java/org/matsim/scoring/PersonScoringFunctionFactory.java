@@ -2,6 +2,73 @@ package org.matsim.scoring;
 
 import com.google.inject.Inject;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.scoring.ScoringFunction;
+import org.matsim.core.scoring.ScoringFunctionFactory;
+import org.matsim.core.scoring.SumScoringFunction;
+import org.matsim.core.scoring.functions.*;
+import org.matsim.network.WuerzburgerStrasse_Links;
+
+public class PersonScoringFunctionFactory implements ScoringFunctionFactory {
+
+	private final Scenario scenario;
+	private final BicycleRoadTrafficHandler handler;
+
+	@Inject
+	public PersonScoringFunctionFactory(
+		Scenario scenario,
+		BicycleRoadTrafficHandler handler
+	) {
+		this.scenario = scenario;
+		this.handler = handler;
+	}
+
+	@Override
+	public ScoringFunction createNewScoringFunction(Person person) {
+
+		SumScoringFunction sum = new SumScoringFunction();
+
+		ScoringParameters params =
+			new ScoringParameters.Builder(scenario, person).build();
+
+		sum.addScoringFunction(new CharyparNagelActivityScoring(params));
+		sum.addScoringFunction(new CharyparNagelLegScoring(params, scenario.getNetwork()));
+		sum.addScoringFunction(new CharyparNagelMoneyScoring(params));
+		sum.addScoringFunction(new CharyparNagelAgentStuckScoring(params));
+
+		boolean isResident =
+			person.getSelectedPlan().getPlanElements().stream()
+				.filter(pe -> pe instanceof Activity)
+				.map(pe -> (Activity) pe)
+				.anyMatch(act ->
+					act.getLinkId() != null
+						&& WuerzburgerStrasse_Links.LINKS.contains(act.getLinkId())
+						&& (
+						act.getType().startsWith("home")
+							|| act.getType().startsWith("work")
+							|| act.getType().startsWith("edu")
+							|| act.getType().startsWith("shopping")
+							|| act.getType().startsWith("leisure")
+							|| act.getType().startsWith("business")
+							|| act.getType().startsWith("other")
+					)
+				);
+
+		sum.addScoringFunction(
+			new PersonScoring(person.getId(), isResident, handler)
+		);
+
+		return sum;
+	}
+}
+
+
+/* reset Safe
+package org.matsim.scoring;
+
+import com.google.inject.Inject;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.scoring.ScoringFunction;
@@ -44,3 +111,5 @@ public class PersonScoringFunctionFactory implements ScoringFunctionFactory {
 		return sumScoringFunction;
 	}
 }
+
+ */

@@ -45,6 +45,7 @@ import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.dashboards.DresdenDashboardProvider;
 import org.matsim.prepare.*;
+import org.matsim.scoring.BicycleRoadTrafficHandler;
 import org.matsim.scoring.PersonScoringFunctionFactory;
 import org.matsim.simwrapper.DashboardProvider;
 import org.matsim.simwrapper.SimWrapperConfigGroup;
@@ -288,11 +289,26 @@ public class DresdenScenario extends MATSimApplication {
 		});
 
 
-		controler.addOverridingModule( new AbstractModule(){
-			@Override public void install() {
-				this.bindScoringFunctionFactory().to( PersonScoringFunctionFactory.class ) ;
-			}
-		} );
+			BicycleRoadTrafficHandler handler = new BicycleRoadTrafficHandler();
+			controler.getEvents().addHandler(handler);
+
+			controler.addOverridingModule(new AbstractModule() {
+				@Override
+				public void install() {
+					bind(BicycleRoadTrafficHandler.class).toInstance(handler);
+					bindScoringFunctionFactory().to(PersonScoringFunctionFactory.class);
+				}
+			});
+
+
+
+		//Safe reset
+
+//		controler.addOverridingModule( new AbstractModule(){
+//			@Override public void install() {
+//				this.bindScoringFunctionFactory().to( PersonScoringFunctionFactory.class ) ;
+//			}
+//		} );
 	}
 //Simwrapper Output
 	/**

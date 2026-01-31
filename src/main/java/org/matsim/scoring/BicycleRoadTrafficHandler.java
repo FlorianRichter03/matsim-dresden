@@ -1,6 +1,62 @@
 package org.matsim.scoring;
 
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.events.LinkLeaveEvent;
+import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
+import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.network.WuerzburgerStrasse_Links;
+import org.matsim.vehicles.Vehicle;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+public class BicycleRoadTrafficHandler
+	implements LinkLeaveEventHandler, PersonEntersVehicleEventHandler {
+
+	/** Vehicle → Person */
+	private final Map<Id<Vehicle>, Id<Person>> vehicleToPerson = new HashMap<>();
+
+	/** Personen, die Würzburger im MIV genutzt haben */
+	private final Set<Id<Person>> violators = new HashSet<>();
+
+	@Override
+	public void handleEvent(PersonEntersVehicleEvent event) {
+		vehicleToPerson.put(event.getVehicleId(), event.getPersonId());
+	}
+
+	@Override
+	public void handleEvent(LinkLeaveEvent event) {
+		if (event.getVehicleId() == null) return;
+		if (event.getVehicleId().toString().startsWith("bike")) return;
+		if (!WuerzburgerStrasse_Links.LINKS.contains(event.getLinkId())) return;
+
+		Id<Person> personId = vehicleToPerson.get(event.getVehicleId());
+		if (personId != null) {
+			violators.add(personId);
+		}
+	}
+
+	public boolean usedWuerzburger(Id<Person> personId) {
+		return violators.contains(personId);
+	}
+
+	@Override
+	public void reset(int iteration) {
+		vehicleToPerson.clear();
+		violators.clear();
+	}
+}
+
+
+/* Reset Safe
+package org.matsim.scoring;
+
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
 import org.matsim.api.core.v01.network.Link;
@@ -134,7 +190,7 @@ public class BicycleRoadTrafficHandler implements
 
 
 
-		/*
+Variante ganz alt
 
 	// Fahrten auf Würzburger Straße
 	Set<Id<Vehicle>> vehiclesOnWuerzburger = new HashSet<>();
