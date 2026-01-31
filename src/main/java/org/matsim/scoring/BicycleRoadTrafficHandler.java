@@ -5,7 +5,6 @@ import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
-import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.network.WuerzburgerStrasse_Links;
 import org.matsim.vehicles.Vehicle;
@@ -32,7 +31,7 @@ public class BicycleRoadTrafficHandler
 	@Override
 	public void handleEvent(LinkLeaveEvent event) {
 		if (event.getVehicleId() == null) return;
-		if (event.getVehicleId().toString().startsWith("bike")) return;
+		if (event.getVehicleId().toString().contains("bike")) return;
 		if (!WuerzburgerStrasse_Links.LINKS.contains(event.getLinkId())) return;
 
 		Id<Person> personId = vehicleToPerson.get(event.getVehicleId());
