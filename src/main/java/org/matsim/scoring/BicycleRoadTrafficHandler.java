@@ -7,16 +7,12 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.vehicles.Vehicle;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class BicycleRoadTrafficHandler implements
 	LinkLeaveEventHandler,
 	PersonEntersVehicleEventHandler,
-	ActivityStartEventHandler,
-	PersonLeavesVehicleEventHandler {
+	ActivityStartEventHandler {
 
 
 	private final Id<Person> personId;
@@ -24,6 +20,7 @@ public class BicycleRoadTrafficHandler implements
 
 	private boolean usedWuerzburger = false;
 	private boolean isResident = false;
+	private boolean penaltyApplied = false;
 
 	private Id<Vehicle> currentVehicle = null;
 
@@ -84,6 +81,7 @@ public class BicycleRoadTrafficHandler implements
 
 	@Override
 	public void handleEvent(LinkLeaveEvent event) {
+		if(currentVehicle == null) return;
 
 		if(!event.getVehicleId().equals(currentVehicle)) return;
 
@@ -109,23 +107,21 @@ public class BicycleRoadTrafficHandler implements
 
 			isResident = true;
 		}
-	}
 
-	@Override
-	public void handleEvent(PersonLeavesVehicleEvent event) {
-		if(usedWuerzburger && !isResident) {
+		if(usedWuerzburger && !isResident && !penaltyApplied) {
 			scoring.addPenalty(-10000.0);
+			penaltyApplied = true;
 		}
 	}
+
 
 	@Override
 	public void reset(int iteration) {
 		usedWuerzburger = false;
 		isResident = false;
+		penaltyApplied = false;
 		currentVehicle = null;
 	}
-
-
 }
 
 
