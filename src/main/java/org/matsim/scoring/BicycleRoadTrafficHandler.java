@@ -3,74 +3,31 @@ package org.matsim.scoring;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
-import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.network.WuerzburgerStrasse_Links;
 import org.matsim.vehicles.Vehicle;
-
-import java.util.Set;
 
 public class BicycleRoadTrafficHandler implements
 	LinkLeaveEventHandler,
 	PersonEntersVehicleEventHandler,
-	ActivityStartEventHandler {
+	PersonLeavesVehicleEventHandler {
 
 
 	private final Id<Person> personId;
 	private final PersonScoring scoring;
+	private boolean isResident;
 
 	private boolean usedWuerzburger = false;
-	private boolean isResident = false;
-	private boolean penaltyApplied = false;
 
 	private Id<Vehicle> currentVehicle = null;
 
-	public BicycleRoadTrafficHandler(Id<Person> personId, PersonScoring scoring) {
+	public BicycleRoadTrafficHandler(Id<Person> personId, PersonScoring scoring, boolean isResident) {
 		this.personId = personId;
 		this.scoring = scoring;
+		this.isResident = isResident;
 	}
 
 
-	// Alle LinkIDs der Würzburger Straße in einer Liste speichern, um immer nur auf ein Objekt zugreifen zu müssen
-	// selbst eingefügter Link wird nicht benötigt, da eh nur für Rad freigegeben
-	Set<Id<Link>> wuerzburgerStrasse_Links = Set.of(
-		Id.createLinkId("-50442874#2"),
-		Id.createLinkId("50442874#0"),
-		Id.createLinkId("-10088757"),
-		Id.createLinkId("1282136539"),
-		Id.createLinkId("-1279746843"),
-		Id.createLinkId("911252645"),
-		Id.createLinkId("-118724108"),
-		Id.createLinkId("118724108"),
-		Id.createLinkId("-1075370971"),
-		Id.createLinkId("102714706"),
-		Id.createLinkId("-1321690631"),
-		Id.createLinkId("1321690631"),
-		Id.createLinkId("-72693818"),
-		Id.createLinkId("72693818"),
-		Id.createLinkId("-695869693#0"),
-		Id.createLinkId("695869693#0"),
-		Id.createLinkId("-695869693#1"),
-		Id.createLinkId("695869693#1"),
-		Id.createLinkId("-1221815305"),
-		Id.createLinkId("73520768#0"),
-		Id.createLinkId("-52872405#2"),
-		Id.createLinkId("52872405#0"),
-		Id.createLinkId("-30502271#0"),
-		Id.createLinkId("30502271#0"),
-		Id.createLinkId("-30502271#1"),
-		Id.createLinkId("30502271#1"),
-		Id.createLinkId("-1321689200"),
-		Id.createLinkId("1223529892"),
-		Id.createLinkId("-1321689198#1"),
-		Id.createLinkId("24518829"),
-		Id.createLinkId("-24518826#0"),
-		Id.createLinkId("1321689199"),
-		Id.createLinkId("-24518826#1"),
-		Id.createLinkId("24518826#1"),
-		Id.createLinkId("-216457072"),
-		Id.createLinkId("216457072"),
-		Id.createLinkId("4428653")
-	);
 
 	@Override
 	public void handleEvent(PersonEntersVehicleEvent event) {
@@ -85,7 +42,7 @@ public class BicycleRoadTrafficHandler implements
 
 		if(!event.getVehicleId().equals(currentVehicle)) return;
 
-		if(wuerzburgerStrasse_Links.contains(event.getLinkId())
+		if(WuerzburgerStrasse_Links.Links.contains(event.getLinkId())
 		 	&& !event.getVehicleId().toString().startsWith("bike")) {
 
 			usedWuerzburger = true;
@@ -93,24 +50,11 @@ public class BicycleRoadTrafficHandler implements
 	}
 
 	@Override
-	public void handleEvent (ActivityStartEvent event) {
+	public void handleEvent(PersonLeavesVehicleEvent event){
 		if(!event.getPersonId().equals(personId)) return;
 
-		if(wuerzburgerStrasse_Links.contains(event.getLinkId())
-			&& (event.getActType().startsWith("home")
-			|| event.getActType().startsWith("work")
-			|| event.getActType().startsWith("edu")
-			|| event.getActType().startsWith("shopping")
-			|| event.getActType().startsWith("leisure")
-			|| event.getActType().startsWith("business")
-			|| event.getActType().startsWith("other"))){
-
-			isResident = true;
-		}
-
-		if(usedWuerzburger && !isResident && !penaltyApplied) {
+		if(usedWuerzburger && !isResident) {
 			scoring.addPenalty(-10000.0);
-			penaltyApplied = true;
 		}
 	}
 
@@ -119,7 +63,6 @@ public class BicycleRoadTrafficHandler implements
 	public void reset(int iteration) {
 		usedWuerzburger = false;
 		isResident = false;
-		penaltyApplied = false;
 		currentVehicle = null;
 	}
 }
