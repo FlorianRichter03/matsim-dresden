@@ -44,6 +44,7 @@ import org.matsim.core.replanning.annealing.ReplanningAnnealerConfigGroup;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.dashboards.DresdenDashboardProvider;
+import org.matsim.network.WuerzburgerStrasse_Links;
 import org.matsim.prepare.*;
 import org.matsim.scoring.BicycleRoadTrafficHandler;
 import org.matsim.scoring.PersonScoringFunctionFactory;
@@ -263,9 +264,48 @@ public class DresdenScenario extends MATSimApplication {
 
 		network.addLink(wuerzburger_verlaengerung);
 
+		//Funktion aufrufen
+		markWuerziResidents(scenario);
 
 
 	}
+
+	//Funktion für Anlieger
+	private void markWuerziResidents(Scenario scenario) {
+
+		Network network = scenario.getNetwork();
+
+		scenario.getPopulation().getPersons().values().forEach(person -> {
+
+			boolean isResident = person.getSelectedPlan().getPlanElements().stream()
+				.filter(pe -> pe instanceof org.matsim.api.core.v01.population.Activity)
+				.map(pe -> (org.matsim.api.core.v01.population.Activity) pe)
+				.anyMatch(act -> {
+
+					// nearest link bestimmen (auch wenn act keine linkId hat)
+					Link nearest = NetworkUtils.getNearestLinkExactly(
+						network,
+						new org.matsim.api.core.v01.Coord(act.getCoord().getX(), act.getCoord().getY())
+					);
+
+					return nearest != null
+						&& WuerzburgerStrasse_Links.LINKS.contains(nearest.getId())
+						&& (
+						act.getType().startsWith("home")
+							|| act.getType().startsWith("work")
+							|| act.getType().startsWith("edu")
+							|| act.getType().startsWith("shopping")
+							|| act.getType().startsWith("leisure")
+							|| act.getType().startsWith("business")
+							|| act.getType().startsWith("other")
+					);
+				});
+
+			// **Ergebnis EINMALIG speichern**
+			person.getAttributes().putAttribute("isWuerziResident", isResident);
+		});
+	}
+
 
 	@Override
 	protected void prepareControler(Controler controler) {

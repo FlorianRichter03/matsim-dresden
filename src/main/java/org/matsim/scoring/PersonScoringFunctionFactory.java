@@ -38,22 +38,10 @@ public class PersonScoringFunctionFactory implements ScoringFunctionFactory {
 		sum.addScoringFunction(new CharyparNagelAgentStuckScoring(params));
 
 		boolean isResident =
-			person.getSelectedPlan().getPlanElements().stream()
-				.filter(pe -> pe instanceof Activity)
-				.map(pe -> (Activity) pe)
-				.anyMatch(act ->
-					act.getLinkId() != null
-						&& WuerzburgerStrasse_Links.LINKS.contains(act.getLinkId())
-						&& (
-						act.getType().startsWith("home")
-							|| act.getType().startsWith("work")
-							|| act.getType().startsWith("edu")
-							|| act.getType().startsWith("shopping")
-							|| act.getType().startsWith("leisure")
-							|| act.getType().startsWith("business")
-							|| act.getType().startsWith("other")
-					)
-				);
+			Boolean.TRUE.equals(
+				person.getAttributes().getAttribute("isWuerziResident")
+			);
+
 
 		sum.addScoringFunction(
 			new PersonScoring(person.getId(), isResident, handler)
