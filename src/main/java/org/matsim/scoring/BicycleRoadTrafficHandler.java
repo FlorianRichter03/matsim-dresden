@@ -2,10 +2,7 @@ package org.matsim.scoring;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.*;
-import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
-import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
+import org.matsim.api.core.v01.events.handler.*;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.vehicles.Vehicle;
@@ -18,13 +15,23 @@ import java.util.Set;
 public class BicycleRoadTrafficHandler implements
 	LinkLeaveEventHandler,
 	PersonEntersVehicleEventHandler,
-	ActivityEndEventHandler,
+	ActivityStartEventHandler,
 	PersonLeavesVehicleEventHandler {
+
+
+	private final Id<Person> personId;
+	private final PersonScoring scoring;
+
+	private boolean usedWuerzburger = false;
+	private boolean isResident = false;
+
+	private Id<Vehicle> currentVehicle = null;
 
 	public BicycleRoadTrafficHandler(Id<Person> personId, PersonScoring scoring) {
 		this.personId = personId;
 		this.scoring = scoring;
 	}
+
 
 	// Alle LinkIDs der Würzburger Straße in einer Liste speichern, um immer nur auf ein Objekt zugreifen zu müssen
 	// selbst eingefügter Link wird nicht benötigt, da eh nur für Rad freigegeben
@@ -67,6 +74,71 @@ public class BicycleRoadTrafficHandler implements
 		Id.createLinkId("216457072"),
 		Id.createLinkId("4428653")
 	);
+
+	@Override
+	public void handleEvent(PersonEntersVehicleEvent event) {
+		if(event.getPersonId().equals(personId)){
+			currentVehicle = event.getVehicleId();
+		}
+	}
+
+	@Override
+	public void handleEvent(LinkLeaveEvent event) {
+
+		if(!event.getVehicleId().equals(currentVehicle)) return;
+
+		if(wuerzburgerStrasse_Links.contains(event.getLinkId())
+		 	&& !event.getVehicleId().toString().startsWith("bike")) {
+
+			usedWuerzburger = true;
+		}
+	}
+
+	@Override
+	public void handleEvent (ActivityStartEvent event) {
+		if(!event.getPersonId().equals(personId)) return;
+
+		if(wuerzburgerStrasse_Links.contains(event.getLinkId())
+			&& (event.getActType().startsWith("home")
+			|| event.getActType().startsWith("work")
+			|| event.getActType().startsWith("edu")
+			|| event.getActType().startsWith("shopping")
+			|| event.getActType().startsWith("leisure")
+			|| event.getActType().startsWith("business")
+			|| event.getActType().startsWith("other"))){
+
+			isResident = true;
+		}
+	}
+
+	@Override
+	public void handleEvent(PersonLeavesVehicleEvent event) {
+		if(usedWuerzburger && !isResident) {
+			scoring.addPenalty(-10000.0);
+		}
+	}
+
+	@Override
+	public void reset(int iteration) {
+		usedWuerzburger = false;
+		isResident = false;
+		currentVehicle = null;
+	}
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+		/*
 
 	// Fahrten auf Würzburger Straße
 	Set<Id<Vehicle>> vehiclesOnWuerzburger = new HashSet<>();
@@ -136,8 +208,7 @@ public class BicycleRoadTrafficHandler implements
 		}
 	}
 
-	// TODO Vergewissert euch, ob ihr hier ActivityEnd oder ActivityStart benötigt
-	public void handleEvent(ActivityEndEvent event) {
+	public void handleEvent(ActivityStartEvent event) {
 		if(wuerzburgerStrasse_Links.contains(event.getLinkId())
 			&& (event.getActType().startsWith("home")
 			|| event.getActType().startsWith("work")
@@ -161,3 +232,4 @@ public class BicycleRoadTrafficHandler implements
 		}
 	}
 }
+*/
