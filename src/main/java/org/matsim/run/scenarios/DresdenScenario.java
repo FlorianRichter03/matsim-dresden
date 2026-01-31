@@ -13,6 +13,8 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.traffic.LinkStats;
@@ -265,27 +267,27 @@ public class DresdenScenario extends MATSimApplication {
 		network.addLink(wuerzburger_verlaengerung);
 
 		//Funktion aufrufen
-		markWuerziResidents(scenario);
+		markWuerzburgerResidents(scenario);
 
 
 	}
 
 	//Funktion für Anlieger
-	private void markWuerziResidents(Scenario scenario) {
+	private void markWuerzburgerResidents(Scenario scenario) {
 
 		Network network = scenario.getNetwork();
 
 		scenario.getPopulation().getPersons().values().forEach(person -> {
 
 			boolean isResident = person.getSelectedPlan().getPlanElements().stream()
-				.filter(pe -> pe instanceof org.matsim.api.core.v01.population.Activity)
-				.map(pe -> (org.matsim.api.core.v01.population.Activity) pe)
+				.filter(pe -> pe instanceof Activity)
+				.map(pe -> (Activity) pe)
 				.anyMatch(act -> {
 
 					// nearest link bestimmen (auch wenn act keine linkId hat)
 					Link nearest = NetworkUtils.getNearestLinkExactly(
 						network,
-						new org.matsim.api.core.v01.Coord(act.getCoord().getX(), act.getCoord().getY())
+						new Coord(act.getCoord().getX(), act.getCoord().getY())
 					);
 
 					return nearest != null
@@ -302,7 +304,7 @@ public class DresdenScenario extends MATSimApplication {
 				});
 
 			// **Ergebnis EINMALIG speichern**
-			person.getAttributes().putAttribute("isWuerziResident", isResident);
+			person.getAttributes().putAttribute("isWuerzburgerResident", isResident);
 		});
 	}
 

@@ -18,14 +18,14 @@ public class BicycleRoadTrafficHandler
 	implements LinkLeaveEventHandler, PersonEntersVehicleEventHandler {
 
 	/** Vehicle → Person */
-	private final Map<Id<Vehicle>, Id<Person>> vehicleToPerson = new HashMap<>();
+	private final Map<Id<Vehicle>, Id<Person>> vehiclePersonIdMap = new HashMap<>();
 
 	/** Personen, die Würzburger im MIV genutzt haben */
-	private final Set<Id<Person>> violators = new HashSet<>();
+	private final Set<Id<Person>> usedWuerzburger = new HashSet<>();
 
 	@Override
 	public void handleEvent(PersonEntersVehicleEvent event) {
-		vehicleToPerson.put(event.getVehicleId(), event.getPersonId());
+		vehiclePersonIdMap.put(event.getVehicleId(), event.getPersonId());
 	}
 
 	@Override
@@ -34,20 +34,20 @@ public class BicycleRoadTrafficHandler
 		if (event.getVehicleId().toString().contains("bike")) return;
 		if (!WuerzburgerStrasse_Links.LINKS.contains(event.getLinkId())) return;
 
-		Id<Person> personId = vehicleToPerson.get(event.getVehicleId());
+		Id<Person> personId = vehiclePersonIdMap.get(event.getVehicleId());
 		if (personId != null) {
-			violators.add(personId);
+			usedWuerzburger.add(personId);
 		}
 	}
 
 	public boolean usedWuerzburger(Id<Person> personId) {
-		return violators.contains(personId);
+		return usedWuerzburger.contains(personId);
 	}
 
 	@Override
 	public void reset(int iteration) {
-		vehicleToPerson.clear();
-		violators.clear();
+		vehiclePersonIdMap.clear();
+		usedWuerzburger.clear();
 	}
 }
 

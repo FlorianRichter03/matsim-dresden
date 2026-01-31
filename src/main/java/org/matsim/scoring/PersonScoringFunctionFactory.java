@@ -2,26 +2,21 @@ package org.matsim.scoring;
 
 import com.google.inject.Inject;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.ScoringFunctionFactory;
 import org.matsim.core.scoring.SumScoringFunction;
 import org.matsim.core.scoring.functions.*;
-import org.matsim.network.WuerzburgerStrasse_Links;
 
 public class PersonScoringFunctionFactory implements ScoringFunctionFactory {
 
 	private final Scenario scenario;
-	private final BicycleRoadTrafficHandler handler;
+	private final BicycleRoadTrafficHandler bicycleRoadTrafficHandler;
 
 	@Inject
-	public PersonScoringFunctionFactory(
-		Scenario scenario,
-		BicycleRoadTrafficHandler handler
-	) {
+	public PersonScoringFunctionFactory(Scenario scenario, BicycleRoadTrafficHandler bicycleRoadTrafficHandler) {
 		this.scenario = scenario;
-		this.handler = handler;
+		this.bicycleRoadTrafficHandler = bicycleRoadTrafficHandler;
 	}
 
 	@Override
@@ -39,12 +34,12 @@ public class PersonScoringFunctionFactory implements ScoringFunctionFactory {
 
 		boolean isResident =
 			Boolean.TRUE.equals(
-				person.getAttributes().getAttribute("isWuerziResident")
+				person.getAttributes().getAttribute("isWuerzburgerResident")
 			);
 
 
 		sum.addScoringFunction(
-			new PersonScoring(person.getId(), isResident, handler)
+			new PersonScoring(person.getId(), isResident, bicycleRoadTrafficHandler)
 		);
 
 		return sum;
